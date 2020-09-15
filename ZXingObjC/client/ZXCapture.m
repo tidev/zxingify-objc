@@ -211,13 +211,31 @@
 }
 
 - (BOOL)hasFront {
+#if TARGET_OS_MACCATALYST
+  if (@available(macOS 10.15, *)) {
+    AVCaptureDeviceDiscoverySession *session = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[ AVCaptureDeviceTypeBuiltInWideAngleCamera ]  mediaType:AVMediaTypeVideo position:AVCaptureDevicePositionFront];
+    return session.devices.count > 0;
+  }
+  return NO;
+#else
+  // Fallback on earlier versions
   NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
   return [devices count] > 1;
+#endif
 }
 
 - (BOOL)hasBack {
+#if TARGET_OS_MACCATALYST
+  if (@available(macOS 10.15, *)) {
+    AVCaptureDeviceDiscoverySession *session = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[ AVCaptureDeviceTypeBuiltInWideAngleCamera ]  mediaType:AVMediaTypeVideo position:AVCaptureDevicePositionBack];
+    return session.devices.count > 0;
+  }
+  return NO;
+#else
+  // Fallback on earlier versions
   NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
   return [devices count] > 0;
+#endif
 }
 
 - (BOOL)hasTorch {
@@ -521,8 +539,13 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
   }
   
   AVCaptureDevice *zxd = nil;
-  
-  NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+  NSArray *devices = nil;
+#if TARGET_OS_MACCATALYST
+  AVCaptureDeviceDiscoverySession *session = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[ AVCaptureDeviceTypeBuiltInWideAngleCamera ]  mediaType:AVMediaTypeVideo position:AVCaptureDevicePositionUnspecified];
+  devices = session.devices;
+#else
+  devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+#endif
   
   if ([devices count] > 0) {
     if (self.captureDeviceIndex == -1) {
